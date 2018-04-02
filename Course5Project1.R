@@ -1,135 +1,88 @@
----
-title: "Alfredo Bird-Canals - Course 5 Peer Assessment 1"
-output: github_document
----
+# Course 5 - Project 2 
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+## initialize environment
 
-## GitHub Documents
-
-This is an R Markdown format used for publishing markdown documents to GitHub. When you click the **Knit** button all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated.
-
-## Initialize Environment
-
-```{r echo=TRUE}
-setwd("C:/Users/afbir/Documents/GitHub/RepData_PeerAssessment1")
+setwd("C:/Users/afbir/Documents/Coursera/Course 5 - Data Analysis/Project 1")
 
 library(dplyr)
 library(ggplot2)
 library(gridExtra)
-```
 
 ## Section 1 - Loading and Preprocessing Data
 
-### Load data
-```{r echo=TRUE}
-dfActivity <- read.csv("activity.csv")
+### load data
 
-summary(dfActivity)
-```
+dfActivity <- read.csv("activity.csv")
 
 ### remove NAs
 
-```{r echo=TRUE}
 dfActivityNoNAs <- dfActivity[complete.cases(dfActivity),]
-
-summary(dfActivityNoNAs)
-```
 
 ### convert date to class Date
 
-```{r echo=TRUE}
 dfActivityNoNAs$date <- as.Date(dfActivityNoNAs$date)
-
-summary(dfActivityNoNAs)
-```
 
 ## Section 2 - What is mean total number of steps taken per day?
 
-### Calculate total number of steps taken per day
+### Calculate and plot the total number of steps taken per day
 
-```{r echo=TRUE}
 dfDailyTotal <- dfActivityNoNAs %>%
   select(date, steps) %>%
   group_by(date) %>%
   summarise(steps_daily_total = sum(steps)) %>%
   na.omit()
 
-summary(dfDailyTotal)
-```
+png("ggHistogram1.png")
 
-### Plot total number of steps taken per day
-
-```{r echo=TRUE}
 ggHistogram1 <- ggplot(dfDailyTotal, aes(x=steps_daily_total)) + geom_histogram()
 
 plot(ggHistogram1)
-```
+
+dev.off()
 
 ### Calculate and report the mean and median of the total number of steps taken per day
 
-```{r echo=TRUE}
 dfTotalMeanMedian <- dfDailyTotal %>%
   select(steps_daily_total) %>%
   summarise(steps_daily_mean = mean(steps_daily_total), steps_daily_median = median(steps_daily_total))
 
-summary(dfTotalMeanMedian)
-
 print(paste("Daily Mean = ", format(dfTotalMeanMedian$steps_daily_mean, nsmall=2)))
 print(paste("Daily Median = ", dfTotalMeanMedian$steps_daily_median))
-```
 
 ## Section 3 - What is the average daily activity pattern?
 
-### Calculate average number of steps taken per interval
-
-```{r echo=TRUE}
 dfIntervalMeanNoNAs <- dfActivityNoNAs %>%
   select(interval, steps) %>%
   group_by(interval) %>%
   summarise(steps_interval_mean = mean(steps)) %>%
   na.omit()
 
-summary(dfIntervalMeanNoNAs)
-```
+png("ggTimeSeries1.png")
 
-### Plot average number of steps taken per interval
-
-```{r echo=TRUE}
 ggTimeSeries1 <- ggplot(dfIntervalMeanNoNAs, aes(x=interval, y=steps_interval_mean)) + geom_line()
 
 plot(ggTimeSeries1)
-```
 
-### Calculate and report the mean and median of the total number of steps taken per interval
+dev.off()
 
-```{r echo=TRUE}
 dfIntervalMaxMeanNoNAs <- arrange(dfIntervalMeanNoNAs, desc(steps_interval_mean))[1,]
-
-summary(dfIntervalMaxMeanNoNAs)
 
 intIntervalNum <- as.character(dfIntervalMaxMeanNoNAs[1,1])
 numIntervalMax <- as.character(round(dfIntervalMaxMeanNoNAs[1,2], digits = 2))
 
-print(paste("Time interval with maximum mean number of steps = ", intIntervalNum))
+print(paste("Time step with maximum mean number of steps = ", intIntervalNum))
 print(paste("Mean number of steps in interval = ", numIntervalMax))
-```
 
 ## Section 4 - Imputing missing values
 
-### Calculate and report number of NAs
+### calculate number of NAs
 
-```{r echo=TRUE}
 intNAs <- nrow(dfActivity) -  nrow(dfActivityNoNAs)
 
 print(paste("Number of NAs = ", as.character(intNAs)))
-```
 
-### Impute interval mean to NAs in new dataset
+### impute interval mean to NAs and create new dataset
 
-```{r echo=TRUE}
 dfActivityNew1 <- merge(x=dfActivity, y=dfIntervalMeanNoNAs)
 
 dfActivityNew1$steps[is.na(dfActivityNew1$steps)] <- 
@@ -137,47 +90,33 @@ dfActivityNew1$steps[is.na(dfActivityNew1$steps)] <-
 
 dfActivityNew2 <- dfActivityNew1 %>% select( interval, steps, date)
 
-summary(dfActivityNew2)
-```
+### Calculate and plot the total number of steps taken per day
 
-### Calculate the total number of steps taken per day (with imputed NAs)
-
-```{r echo=TRUE}
 dfDailyTotal2 <- dfActivityNew2 %>%
   select(date, steps) %>%
   group_by(date) %>%
   summarise(steps_daily_total = sum(steps)) %>%
   na.omit()
 
-summary(dfDailyTotal2)
-```
+png("ggHistogram2.png")
 
-### Plot the total number of steps taken per day (with imputed NAs)
-
-```{r echo=TRUE}
 ggHistogram2 <- ggplot(dfDailyTotal2, aes(x=steps_daily_total)) + geom_histogram()
 
 plot(ggHistogram2)
-```
 
-### Calculate and report the mean and median of the total number of steps taken per day (with imputed NAs)
+dev.off()
 
-```{r echo=TRUE}
+### Calculate and report the mean and median of the total number of steps taken per day
+
 dfTotalMeanMedian2 <- dfDailyTotal2 %>%
   select(steps_daily_total) %>%
   summarise(steps_daily_mean = mean(steps_daily_total), steps_daily_median = median(steps_daily_total))
 
-summary(dfTotalMeanMedian2)
-
 print(paste("Daily Mean with Imputed Values = ", format(dfTotalMeanMedian2$steps_daily_mean, nsmall=2)))
 print(paste("Daily Median with Imputed Values = ", dfTotalMeanMedian2$steps_daily_median))
-```
 
-## Section 5 - Compare activity by time interval on Weekdays versus Weekends
+## Section 3 - What is the average daily activity pattern?
 
-### Create new dataset and add column with weekday or weekend value using weekdays() function  
-
-```{r echo=TRUE}
 dfActivityNew3 <- dfActivityNew2
 
 dfActivityNew3$date = as.Date(dfActivityNew3$date)
@@ -186,41 +125,22 @@ dfActivityNew3$weekdayorweekend[!weekdays(dfActivityNew3$date) %in% c("Saturday"
 dfActivityNew3$weekdayorweekend[weekdays(dfActivityNew3$date) %in% c("Saturday", "Sunday")] <- "weekend"
 
 dfActivityNew3WeekDays <- filter(dfActivityNew3, weekdayorweekend == "weekday")
-
-summary(dfActivityNew3WeekDays)
-
 dfActivityNew3WeekEnds <- filter(dfActivityNew3, weekdayorweekend == "weekend")
 
-summary(dfActivityNew3WeekEnds)
-```
-
-### Calculate mean number per time interval on weekends
-
-```{r echo=TRUE}
 dfIntervalMeanWeekEnd <- dfActivityNew3WeekEnds %>%
   select(interval, steps) %>%
   group_by(interval) %>%
   summarise(steps_interval_mean = mean(steps)) %>%
   na.omit()
 
-summary(dfIntervalMeanWeekEnd)
-```
-
-### Calculate mean number per time interval on weekdays
-
-```{r echo=TRUE}
 dfIntervalMeanWeekDay <- dfActivityNew3WeekDays %>%
   select(interval, steps) %>%
   group_by(interval) %>%
   summarise(steps_interval_mean = mean(steps)) %>%
   na.omit()
 
-summary(dfIntervalMeanWeekDay)
-```
+png("ggTimeSeries3-4.png")
 
-### Plot mean number of days per time interval on weekends and weekdays
-
-```{r echo=TRUE}
 ggTimeSeries3 <- ggplot(dfIntervalMeanWeekEnd, aes(x=interval, y=steps_interval_mean)) + 
   geom_line() + 
   ggtitle("weekends") + 
@@ -234,6 +154,6 @@ ggTimeSeries4 <- ggplot(dfIntervalMeanWeekDay, aes(x=interval, y=steps_interval_
   theme(plot.title = element_text(hjust=0.5))
 
 grid.arrange(ggTimeSeries3, ggTimeSeries4, nrow=2)
-```
 
-## End
+dev.off()
+  
